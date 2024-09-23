@@ -8,9 +8,10 @@
 
 - Build the project
     ```shell
-    mvn clean package
+    mvn clean compile
     ```
 - Usage
     ```shell
-    java -jar <jarfile> --create-table --sessions <num> --threads <num> --queries <num> --datafile <path>
+    mvn exec:java -Dexec.mainClass=com.yugabyte.app.App -Dexec.args="[--create-table] [--sessions <num>] [--threads <num>] [--queries <num>] [--datafile <path>] [--rows <num>]"
     ```
+- Currently, it only performs reads on a table.
