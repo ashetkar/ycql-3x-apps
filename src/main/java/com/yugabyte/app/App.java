@@ -92,7 +92,7 @@ public class App {
 
     PartitionAwarePolicy pap = new PartitionAwarePolicy();
     Cluster cluster = Cluster.builder()
-            .addContactPoint("127.0.0.1:9042")
+            .addContactPoint("127.0.0.1")
             .withLoadBalancingPolicy(pap)
             .withRetryPolicy(DefaultRetryPolicy.INSTANCE)
             .withQueryOptions(new QueryOptions()
