@@ -33,7 +33,7 @@ public class App {
   public static void main(String[] args) throws InterruptedException {
 
     if (args == null || args.length < 1) {
-      System.out.println("Usage:\n  mvn exec:java -Dexec.mainClass=com.yugabyte.app.App -Dexec.args=\"--restart-nodes [--nodes <num>] [--pause-time <seconds>]\"\n"
+      LOG.info("Usage:\n  mvn exec:java -Dexec.mainClass=com.yugabyte.app.App -Dexec.args=\"--restart-nodes [--nodes <num>] [--pause-time <seconds>]\"\n"
         + "  # OR\n"
         + "  mvn exec:java -Dexec.mainClass=com.yugabyte.app.App -Dexec.args=\"--read-workload [--create-table] [--sessions <num>] [--threads <num>] [--queries <num>] [--datafile <path>] [--rows <num>]\"");
       return;
@@ -51,7 +51,7 @@ public class App {
 
   private static void stopStartNodes(String[] args) throws InterruptedException {
     processNodeRestartArgs(args);
-    System.out.println("Restarting nodes continuously ...");
+    LOG.info("Restarting nodes continuously ...");
     Random rand = new Random();
     while (true) {
       int nodeIndex = rand.nextInt(nodes) + 1;
@@ -76,7 +76,7 @@ public class App {
 
   private static void processNodeRestartArgs(String[] args) {
     for (int i = 1; i < args.length; i++) {
-      System.out.println("Arg #" + i + ": " + args[i]);
+      LOG.info("Arg #" + i + ": " + args[i]);
       switch (args[i]) {
         case "--nodes":
           try {
@@ -84,7 +84,7 @@ public class App {
             if (nodes < 1 || nodes > 120) {
               throw new IllegalArgumentException("Invalid number of nodes: " + nodes);
             }
-            System.out.println("Nodes in the cluster: " + nodes);
+            LOG.info("Nodes in the cluster: " + nodes);
           } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid number of nodes: " + nodes);
           }
@@ -95,7 +95,7 @@ public class App {
             if (pauseSeconds < 1) {
               throw new IllegalArgumentException("Invalid pause interval: " + pauseSeconds);
             }
-            System.out.println("Pause interval: " + pauseSeconds);
+            LOG.info("Pause interval: " + pauseSeconds);
           } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid pause interval: " + pauseSeconds);
           }
@@ -106,8 +106,8 @@ public class App {
 
   // For circuit breaker testing
   private static void readWorkloadTest(String[] args) {
-    System.out.println("Usage:\n  mvn exec:java -Dexec.mainClass=com.yugabyte.app.App -Dexec.args=\"--read-workload [--create-table] [--sessions <num>] [--threads <num>] [--queries <num>] [--datafile <path>] [--rows <num>]\"");
-    System.out.println("Read Workload Test");
+    LOG.info("Usage:\n  mvn exec:java -Dexec.mainClass=com.yugabyte.app.App -Dexec.args=\"--read-workload [--create-table] [--sessions <num>] [--threads <num>] [--queries <num>] [--datafile <path>] [--rows <num>]\"");
+    LOG.info("Read Workload Test");
 
     processArgs(args);
     sessions = new Session[numOfSessions];
@@ -127,12 +127,12 @@ public class App {
 
     try {
       for (int i = 0; i < numOfSessions; i++) {
-        System.out.println("Initializing session #" + i);
+        LOG.info("Initializing session #" + i);
         sessions[i] = cluster.connect();
       }
 
       if (createTable) {
-        System.out.println("Creating table");
+        LOG.info("Creating table");
         createAndPopulateTable();
       }
 
@@ -141,13 +141,15 @@ public class App {
       for (int i = 0; i < numOfSessions; i++) {
         if (sessions[i] != null) sessions[i].close();
       }
+      LOG.info("Closed all sessions");
       cluster.close();
+      LOG.info("Closed cluster");
     }
   }
 
   private static void processArgs(String[] args) {
-    for (int i = 0; i < args.length; i++) {
-      System.out.println("Arg #" + i + ": " + args[i]);
+    for (int i = 1; i < args.length; i++) {
+      LOG.info("Arg #" + i + ": " + args[i]);
       switch (args[i]) {
         case "--queries":
           try {
@@ -155,15 +157,15 @@ public class App {
             if (queriesPerThreadPerSession < 1) {
               queriesPerThreadPerSession = 1;
             }
-            System.out.println("Queries per thread per session: " + queriesPerThreadPerSession);
+            LOG.info("Queries per thread per session: " + queriesPerThreadPerSession);
           } catch (NumberFormatException e) {
-            System.out.println("Invalid number of queries: " + args[i] + ", setting to 1");
+            LOG.info("Invalid number of queries: " + args[i] + ", setting to 1");
             queriesPerThreadPerSession = 1;
           }
           break;
         case "--create-table":
           createTable = true;
-          System.out.println("createTable = true");
+          LOG.info("createTable = true");
           break;
         case "--threads":
           try {
@@ -171,9 +173,9 @@ public class App {
             if (numOfThreads < 1) {
               numOfThreads = 1;
             }
-            System.out.println("Number of threads: " + numOfThreads);
+            LOG.info("Number of threads: " + numOfThreads);
           } catch (NumberFormatException e) {
-            System.out.println("Invalid number of threads: " + args[i] + ", setting to 1");
+            LOG.info("Invalid number of threads: " + args[i] + ", setting to 1");
             numOfThreads = 1;
           }
           break;
@@ -183,15 +185,15 @@ public class App {
             if (numOfSessions < 1) {
               numOfSessions = 1;
             }
-            System.out.println("Number of sessions: " + numOfSessions);
+            LOG.info("Number of sessions: " + numOfSessions);
           } catch (NumberFormatException e) {
-            System.out.println("Invalid number of sessions: " + args[i] + ", setting to 1");
+            LOG.info("Invalid number of sessions: " + args[i] + ", setting to 1");
             numOfSessions = 1;
           }
           break;
         case "--datafile":
           dataFile = args[++i];
-          System.out.println("Data file: " + dataFile);
+          LOG.info("Data file: " + dataFile);
           break;
         case "--rows":
           try {
@@ -199,14 +201,14 @@ public class App {
             if (numOfRows < 1) {
               throw new IllegalArgumentException("Invalid number of rows: " + args[i]);
             }
-            System.out.println("Number of rows to be queried: " + numOfRows);
+            LOG.info("Number of rows to be queried: " + numOfRows);
           } catch (NumberFormatException e) {
-            System.out.println("Invalid number of rows: " + args[i] + ", setting to 10");
+            LOG.info("Invalid number of rows: " + args[i] + ", setting to 10");
             numOfRows = 10;
           }
           break;
         default:
-          System.out.println("Unknown workload type: " + args[i]);
+          LOG.info("Unknown workload type: " + args[i]);
       }
     }
   }
@@ -230,15 +232,16 @@ public class App {
                 for (Row row : rs) {
                   String name = row.getString("customer_name");
                   int device = row.getInt("device_id");
-                  if (name != null && device > 0) {}
-                }
-                if (k % 50 == 0 && k > 0) {
-                  System.out.println("Thread " + fj + " ran " + k + " queries so far");
+                  if (name != null && device > 0) {
+                    if (k % 5000 == 0 && k > 0) {
+                      LOG.info("Thread " + fj + " ran " + k + " queries so far. current values: " + name + ", device: " + device);
+                    }
+                  }
                 }
               }
-              System.out.println("Completed queries for thread " + fj);
+              LOG.info("Completed queries for thread " + fj);
             } catch (Throwable e) {
-              System.out.println("Exception while selects for thread " + fj + ": " + e.getMessage());
+              LOG.info("Exception during selects for thread " + fj + ": " + e);
               e.printStackTrace();
               System.exit(1);
             }
@@ -246,7 +249,7 @@ public class App {
         });
         threads[fi][j].start();
       }
-      System.out.println("Started all threads for session " + i);
+      LOG.info("Started all threads for session " + i);
     }
 
     for (int i = 0; i < numOfSessions; i++) {
@@ -254,17 +257,17 @@ public class App {
         try {
           threads[i][j].join();
         } catch (InterruptedException e) {
-          System.out.println("Thread [" + i + "," + j + "] interrupted: " + e);
+          LOG.info("Thread [" + i + "," + j + "] interrupted: " + e);
         }
       }
     }
-    System.out.println("Closed all sessions");
+    LOG.info("All threads joined");
   }
 
   private static void createAndPopulateTable() {
     sessions[0].execute("CREATE KEYSPACE IF NOT EXISTS example");
     sessions[0].execute("CREATE TABLE example.SensorData (customer_name text, device_id int, ts timestamp," +
-            " sensor_data map<text, double>, PRIMARY KEY((customer_name, device_id), ts))");
+            " sensor_data map<text, double>, PRIMARY KEY((customer_name, device_id), ts)) WITH tablets = 10");
     // sessions[0].execute("COPY example.SensorData FROM '" + dataFile + "'"); 
     // com.datastax.driver.core.exceptions.SyntaxError: Feature Not Supported
     // COPY example.SensorData FROM '/home/centos/work/build-apps/100krows.csv'
@@ -274,7 +277,7 @@ public class App {
 
     public static void executeCmd(String cmd, String msg, int timeout) {
       try {
-        System.out.println("Command to be executed: " + cmd);
+        LOG.info("Command to be executed: " + cmd);
         ProcessBuilder builder = new ProcessBuilder();
         builder.command("sh", "-c", cmd);
         builder.redirectErrorStream(true);
@@ -286,12 +289,12 @@ public class App {
                   .lines().collect(Collectors.joining("\n"));
           throw new RuntimeException(msg + ": FAILED\n" + result);
         }
-        System.out.println(msg + ": SUCCEEDED!");
+        LOG.info(msg + ": SUCCEEDED!");
       } catch (Exception e) {
         // if (rethrow && e instanceof RuntimeException) {
         //   throw (RuntimeException) e;
         // } else {
-          System.out.println("Exception " + e);
+          LOG.info("Exception while executing cmd " + cmd + ": " + e);
         // }
       }
     }
