@@ -2,6 +2,7 @@ package com.yugabyte.app;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.fasterxml.jackson.databind.deser.std.StackTraceElementDeserializer;
 import com.yugabyte.driver.core.policies.PartitionAwarePolicy;
 
 import java.io.BufferedReader;
@@ -241,8 +242,11 @@ public class App {
               }
               LOG.info("Completed queries for thread " + fj);
             } catch (Throwable e) {
-              LOG.info("Exception during selects for thread " + fj + ": " + e);
-              e.printStackTrace();
+              StringBuilder sb = new StringBuilder();
+              for (StackTraceElement ste : e.getStackTrace()) {
+                sb.append(ste.toString());
+              }
+              LOG.info("Exception during selects for thread " + fj + ": " + e + ", stack trace:\n" + sb.toString());
               System.exit(1);
             }
           }
